@@ -64,7 +64,8 @@ def get_top10(counts):
     Return value:
     A list of (count,word) pairs (int,str)
     """
-    raise NotImplementedError
+    top10 = sorted([(count, word) for word, count in counts.items()], reverse=True)[:10]
+    return top10
 
 
 
@@ -99,7 +100,10 @@ def compute_checksum(counts):
     Return value:
     The checksum (int)
     """
-    raise NotImplementedError
+    checksum = 0
+    for word, count in counts.items():
+        checksum += len(word) * count
+    return checksum
 
 
 if __name__ == '__main__':
