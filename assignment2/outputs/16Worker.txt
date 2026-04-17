@@ -1,0 +1,5 @@
+Argument parsing time: 0.1950 seconds
+Reading files time: 286.5577 seconds
+Counting words time: 17.1842 seconds
+Merging counts time: 19.8906 seconds
+Total time: 323.8274 seconds
