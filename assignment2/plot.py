@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 
 num_workers = [1, 2, 4, 8, 16, 32, 64]
 
-runtimes = [40.4101, 48.2563, 26.5371, 15.8294, 17.1842, 18.9233, 19.8408]
+runtimes = [82.1771, 64.9712, 46.3598, 31.5898, 30.1038, 25.8339, 23.9160]
 
-theoretical_speedup = 1.07
+theoretical_speedup = 24.5867
 
 
 t1 = runtimes[0]
