@@ -112,14 +112,12 @@ def merge_counts(out_queue,wordcount_queue,num_workers):
 
         if dict is None:
             workers_finished += 1
-            continue
-
-        if workers_finished == num_workers:
-            checksum = compute_checksum(global_dict)
-            out_queue.put(checksum)
-            top10 = get_top10(global_dict)
-            out_queue.put(top10)
-            return
+            if workers_finished == num_workers:
+                checksum = compute_checksum(global_dict)
+                out_queue.put(checksum)
+                top10 = get_top10(global_dict)
+                out_queue.put(top10)
+                return
 
 
         for (k,v) in dict.items():
@@ -172,11 +170,43 @@ if __name__ == '__main__':
         sys.stderr.write(f'{sys.argv[0]}: ERROR: Batch size must be positive (got {batch_size})!\n')
         quit(1)
 
+    # Creating Queues
     wordcount_queue = mp.Queue()
     filename_queue = mp.Queue()
     out_queue = mp.Queue()
 
-    
+    workers = []
+
+    # Constructing workers
+    for _ in range(num_workers):
+        p = mp.Process(target=count_words_in_file, args=(filename_queue, wordcount_queue, batch_size))
+        workers.append(p)
+        p.start()
+
+    # Merger process running the merge function
+    merger_process = mp.Process(target=merge_counts, args=(out_queue, wordcount_queue, num_workers))
+    merger_process.start()
+
+    # Placing filenames into the filename queue
+    for filename in get_filenames(path):
+        filename_queue.put(filename)
+
+    for _ in range(num_workers):
+        filename_queue.put(None)
+
+    # Get the values form the out queue
+    checksum = out_queue.get()
+    top10 = out_queue.get()
+
+    print(f"Checksum is: {checksum}")
+    for count, word in top10:
+        print(f"Count: {count} for word: {word}")
+
+    # Stop the processes
+    for p in workers:
+        p.join()
+    merger_process.join()
+
 
     # construct workers and queues
     # construct a special merger process
