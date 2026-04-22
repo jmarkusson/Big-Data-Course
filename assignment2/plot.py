@@ -4,7 +4,7 @@ num_workers = [1, 2, 4, 8, 16, 32, 64]
 
 runtimes = [82.1771, 64.9712, 46.3598, 31.5898, 30.1038, 25.8339, 23.9160]
 
-theoretical_speedup = 24.5867
+theoretical_speedup = 3.659
 
 
 t1 = runtimes[0]
@@ -21,4 +21,3 @@ plt.xticks(num_workers)
 plt.legend(loc='best', frameon=False)
 plt.show()
 
-print(f"Total runtime at 64 workers: {runtimes[-1]:.4f} s")
