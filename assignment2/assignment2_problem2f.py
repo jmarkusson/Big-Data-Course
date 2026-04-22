@@ -114,7 +114,13 @@ def merge_counts(out_queue,wordcount_queue,num_workers):
             workers_finished += 1
             continue
 
-        if 
+        if workers_finished == num_workers:
+            checksum = compute_checksum(global_dict)
+            out_queue.put(checksum)
+            top10 = get_top10(global_dict)
+            out_queue.put(top10)
+            return
+
 
         for (k,v) in dict.items():
             if k not in global_dict:
@@ -165,6 +171,12 @@ if __name__ == '__main__':
     if batch_size < 1:
         sys.stderr.write(f'{sys.argv[0]}: ERROR: Batch size must be positive (got {batch_size})!\n')
         quit(1)
+
+    wordcount_queue = mp.Queue()
+    filename_queue = mp.Queue()
+    out_queue = mp.Queue()
+
+    
 
     # construct workers and queues
     # construct a special merger process
