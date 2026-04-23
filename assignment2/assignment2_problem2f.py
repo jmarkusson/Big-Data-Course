@@ -118,7 +118,7 @@ def merge_counts(out_queue,wordcount_queue,num_workers):
                 top10 = get_top10(global_dict)
                 out_queue.put(top10)
                 return
-
+        continue
 
         for (k,v) in dict.items():
             if k not in global_dict:
