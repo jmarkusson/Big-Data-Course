@@ -148,6 +148,7 @@ def compute_checksum(counts):
 
 
 if __name__ == '__main__':
+    program_start_t = time.time()
     parser = argparse.ArgumentParser(description='Counts words of all the text files in the given directory')
     parser.add_argument('-w', '--num-workers', help = 'Number of workers', default=1, type=int)
     parser.add_argument('-b', '--batch-size', help = 'Batch size', default=1, type=int)
@@ -170,6 +171,8 @@ if __name__ == '__main__':
         sys.stderr.write(f'{sys.argv[0]}: ERROR: Batch size must be positive (got {batch_size})!\n')
         quit(1)
 
+    time_args = time.time() - program_start_t # Time recorded for argument block
+
     # Creating Queues
     wordcount_queue = mp.Queue()
     filename_queue = mp.Queue()
@@ -187,6 +190,8 @@ if __name__ == '__main__':
     merger_process = mp.Process(target=merge_counts, args=(out_queue, wordcount_queue, num_workers))
     merger_process.start()
 
+    process_start_t = time.time() # Time recorded for the start of the processes, before data is fed
+
     # Placing filenames into the filename queue
     for filename in get_filenames(path):
         filename_queue.put(filename)
@@ -198,6 +203,8 @@ if __name__ == '__main__':
     checksum = out_queue.get()
     top10 = out_queue.get()
 
+    process_time = time.time() - process_start_t # Time recorded for the processes
+
     print(f"Checksum is: {checksum}")
     for count, word in top10:
         print(f"Count: {count} for word: {word}")
@@ -207,10 +214,13 @@ if __name__ == '__main__':
         p.join()
     merger_process.join()
 
+    total_time = time.time() - program_start_t # Time recorded for the total main program
 
     # construct workers and queues
     # construct a special merger process
     # put filenames into the input queue
     # workers then put dictionaries for the merger
     # the merger shall return the checksum and top 10 through the out queue
-    
+    print(f"Total time: {total_time}")
+    print(f"Argument parsing time: {time_args}")
+    print(f"Process time: {process_time}")
