@@ -216,11 +216,14 @@ if __name__ == '__main__':
 
     total_time = time.time() - program_start_t # Time recorded for the total main program
 
+    print("-"*20)
+
+    print(f"Total time: {total_time}")
+    print(f"Argument parsing time: {time_args}")
+    print(f"Process time: {process_time}")
+
     # construct workers and queues
     # construct a special merger process
     # put filenames into the input queue
     # workers then put dictionaries for the merger
     # the merger shall return the checksum and top 10 through the out queue
-    print(f"Total time: {total_time}")
-    print(f"Argument parsing time: {time_args}")
-    print(f"Process time: {process_time}")
