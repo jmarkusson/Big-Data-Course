@@ -4,9 +4,9 @@ num_workers = [1, 2, 4, 8, 16, 32, 64]
 
 
 # Detta är för f)
-runtimes = [75.5345, 51.2901, 40.3619, 36.9829, 32.2387, 32.7451, 30.3308]
+runtimes = [683.4495, 487.6704, 351.9803, 294.7841, 287.1305, 253.9293, 235.9815]
 
-theoretical_speedup = 526.3
+theoretical_speedup = 3333
 
 
 t1 = runtimes[0]
