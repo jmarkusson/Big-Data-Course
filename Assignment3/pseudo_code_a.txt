@@ -1,0 +1,41 @@
+class Map_phase(MRJob):
+
+    def mapper(self, index, row):
+        cols = split data by (',')
+
+        self.star = col containing star
+        self.constellation = col containing constellation
+        self.mineral_value = col containing mineral value
+
+        if self.star == "Prime"
+            self.by = constellation
+        else:
+            self.star_system = self.Star + " " + self.constellation 
+        
+        yield (star_system, mineral_value)
+
+
+    def shuffle:
+
+    
+    def reducer(self, star_system, list_of_mineral_values)
+        yield (star_system, sum(list_of_mineral_values))
+
+
+
+
+
+
+
+Mapper:
+
+
+
+
+Reduce:
+
+
+
+
+Få in: (Row_number, row_values)
+Vi ska få ut: (Star: mineral_value)
