@@ -108,8 +108,7 @@ def compute_checksum(counts):
 
 
 if __name__ == '__main__':
-    total_start = time.perf_counter()
-    arg_block_start = time.perf_counter()
+    t0 = time.time()
 
     parser = argparse.ArgumentParser(description='Counts words of all the text files in the given directory')
     parser.add_argument('-w', '--num-workers', help = 'Number of workers', default=1, type=int)
@@ -133,25 +132,28 @@ if __name__ == '__main__':
     if batch_size < 1:
         sys.stderr.write(f'{sys.argv[0]}: ERROR: Batch size must be positive (got {batch_size})!\n')
         quit(1)
+        
 
-    time_arg = time.perf_counter() - arg_block_start # Time for argument block
+    t1 = time.time() - t0 # Time for argument parsing
 
-    read_block_start = time.perf_counter()
     filenames = list(get_filenames(path))
-    time_read = time.perf_counter() - read_block_start # Time for collecting file paths
+    t2 = time.time() # Time for collecting file paths
 
-    count_block_start = time.perf_counter()
     with mp.Pool(processes=num_workers) as pool:
         file_counts = pool.map(count_words_in_file, filenames, chunksize=batch_size)
-    time_count = time.perf_counter() - count_block_start # Time for counting word occourences and appending dictionary
+    t3 = time.time() # Time for counting word occourences and appending dictionary
 
-    merge_block_start = time.perf_counter()
     global_counts = dict()
     for counts in file_counts:
         merge_counts(global_counts,counts) # Not Parallizable
-    time_merge_count = time.perf_counter() - merge_block_start
+    t4 = time.time() # Time for merging counts
 
-    time_total = time.perf_counter() - total_start # Time for the total main program
+    time_total = t4 - t0
+    time_arg = t1 - t0
+    time_read = t2 - t1
+    time_count = t3 - t2
+    time_merge_count = t4 - t3
+
 
     print(f'Argument parsing time: {time_arg:.4f} seconds')
     print(f'Reading files time: {time_read:.4f} seconds')

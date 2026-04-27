@@ -1,24 +1,164 @@
-import matplotlib.pyplot as plt
+import os
+import argparse
+import sys
+import time
+import multiprocessing as mp
 
-num_workers = [1, 2, 4, 8, 16, 32, 64]
+def get_filenames(path):
+    """
+    A generator function: Iterates through all .txt files in the path and
+    returns the full names of the files
 
-runtimes = [94.1794, 85.8841, 66.3036, 51.0005, 51.3457, 44.2393, 69.1251]
+    Parameters:
+    - path : string, path to walk through
 
-theoretical_speedup = 3.659
+    Yields:
+    The full filenames of all files ending in .txt
+    """
+    for (root, dirs, files) in os.walk(path):
+        for file in files:
+            if file.endswith('.txt'):
+                yield f'{root}/{file}'
+
+def get_file(path):
+    """
+    Reads the content of the file and returns it as a string.
+
+    Parameters:
+    - path : string, path to a file
+
+    Return value:
+    The content of the file in a string.
+    """
+    with open(path,'r') as f:
+        return f.read()
+
+def count_words_in_file(file):
+    """
+    Counts the number of occurrences of words in the file
+    Whitespace is ignored
+
+    Parameters:
+    - file, string : the content of a file
+
+    Returns: Dictionary that maps words (strings) to counts (ints)
+    """
+    counts = dict()
+    for word in file.split():
+        if word in counts:
+            counts[word] += 1
+        else:
+            counts[word] = 1
+    return counts
 
 
-t1 = runtimes[0]
-speedups = [t1 / t for t in runtimes]
 
-plt.plot(num_workers, speedups, marker='o', color='blue', linestyle='-', label='Measured')
+def get_top10(counts):
+    """
+    Determines the 10 words with the most occurrences.
+    Ties can be solved arbitrarily.
 
-plt.axhline(y=theoretical_speedup, color='red', linestyle='--', label='Amdahl max')
+    Parameters:
+    - counts, dictionary : a mapping from words (str) to counts (int)
+    
+    Return value:
+    A list of (count,word) pairs (int,str)
+    """
+    top10 = sorted([(count, word) for word, count in counts.items()], reverse=True)[:10]
+    return top10
 
-plt.xlabel("Workers")
-plt.ylabel("Speedup")
-plt.title("Speedup vs. Workers")
-plt.xticks(num_workers)
-plt.legend(loc='best', frameon=False)
-plt.show()
 
-print(f"Total runtime at 64 workers: {runtimes[-1]:.4f} s")
+
+def merge_counts(dict_to, dict_from):
+    """
+    Merges the word counts from dict_from into dict_to, such that
+    if the word exists in dict_to, then the count is added to it,
+    otherwise a new entry is created with count from dict_from
+
+    Parameters:
+    - dict_to, dictionary : dictionary to merge to
+    - dict_from, dictionary : dictionary to merge from
+
+    Return value: None
+    """
+    for (k,v) in dict_from.items():
+        if k not in dict_to:
+            dict_to[k] = v
+        else:
+            dict_to[k] += v
+
+
+
+def compute_checksum(counts):
+    """
+    Computes the checksum for the counts as follows:
+    The checksum is the sum of products of the length of the word and its count
+
+    Parameters:
+    - counts, dictionary : word to count dictionary
+
+    Return value:
+    The checksum (int)
+    """
+    checksum = 0
+    for word, count in counts.items():
+        checksum += len(word) * count
+    return checksum
+
+
+if __name__ == '__main__':
+    t0 = time.time() # Time recorded for the total main program
+
+    parser = argparse.ArgumentParser(description='Counts words of all the text files in the given directory')
+    parser.add_argument('-w', '--num-workers', help = 'Number of workers', default=1, type=int)
+    parser.add_argument('-b', '--batch-size', help = 'Batch size', default=1, type=int)
+    parser.add_argument('path', help = 'Path that contains text files')
+    args = parser.parse_args()
+
+    path = args.path
+
+    if not os.path.isdir(path):
+        sys.stderr.write(f'{sys.argv[0]}: ERROR: `{path}\' is not a valid directory!\n')
+        quit(1)
+
+    
+    num_workers = args.num_workers
+    if num_workers < 1:
+        sys.stderr.write(f'{sys.argv[0]}: ERROR: Number of workers must be positive (got {num_workers})!\n')
+        quit(1)
+
+    batch_size = args.batch_size
+    if batch_size < 1:
+        sys.stderr.write(f'{sys.argv[0]}: ERROR: Batch size must be positive (got {batch_size})!\n')
+        quit(1)
+
+    t1 = time.time() # Time recorded for argument block
+
+    
+    files = [get_file(fn) for fn in get_filenames(path)] # Parallizable 
+    t2 = time.time() # Time recorded for reading files block
+
+    with mp.Pool(processes=num_workers) as pool:
+        file_counts = pool.map(count_words_in_file, files, chunksize=batch_size)
+    t3 = time.time() # Time recorded for counting word occourences and appending dictionary
+
+    global_counts = dict()
+    for counts in file_counts:
+        merge_counts(global_counts,counts) # Not Parallizable
+    t4 = time.time() # Time recorded for merging counts
+
+    time_arg = t1 - t0
+    time_read = t2 - t1
+    time_count = t3 - t2
+    time_merge_count = t4 - t3
+    time_total = t4 - t0
+
+
+    print(f'Argument parsing time: {time_arg:.4f} seconds')
+    print(f'Reading files time: {time_read:.4f} seconds')
+    print(f'Counting words time: {time_count:.4f} seconds')
+    print(f'Merging counts time: {time_merge_count:.4f} seconds')
+    print(f'Total time: {time_total:.4f} seconds')
+    print(f'Fraction parallelized: {(time_count + time_read)/time_total:.4f}')
+    
+    
