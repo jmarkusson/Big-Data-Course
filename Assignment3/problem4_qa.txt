@@ -1,0 +1,72 @@
+class TwitterFollowers(MRJob):
+
+    def steps():
+        return [MRStep(mapper = mapper1, combiner = reducer1, reducer = reducer1)
+                MRStep(mapper = mapper2, combiner = combiner, reducer = reducer2)]
+
+    def mapper1(line):
+        user_id, following_string = line split by (":") and strip whitespaces
+
+        yield(user_id, 0) # Ensure they are still counted
+
+        if following_string is NOT empty:
+            follower_list = split folling string by ","
+        for each user in follower_list:
+            yield(user, 1)
+
+
+    def reducer1(user, counts):
+        total_followers = 0
+
+        for each count in counts:
+            total_followers += count
+
+        yield(user, total_followers)
+
+    def mapper2(user, followers)
+        if followers is 0:
+            is_zero_followers = 1
+        else:
+            is_zero_followers = 0
+
+        yield("GLOBAL", (user_id, followers, followers, 1, is_zero_followers))
+
+    def combine(_, list_of_tuples)
+        local_max_id = -1
+        local_max_count = -1
+        sum_followers = 0
+        total_users = 0
+        sum_zeroes = 0
+
+        for every tuple in list_of_tuples:
+            sum_followers = sum_followers + tuple.followers
+            total_users = total_users + tuple.Count_of_Users
+            sum_zeros = sum_zeros + tuple.is_zero_followers
+
+            if tuple.followers > local_max_count:
+                local_max_count = tuple.followers
+                local_max_id = tuple.user_id
+
+        yield("GLOBAL", ("local_max_id, local_max_count, sum_followers, total_users, sum_zeros))
+
+    def reducer2(_, list_of_tuples):
+        global_max_id = -1
+        global_max_count = -1
+        global_total_followers = 0
+        global_total_users = 0
+        global_total_zeros = 0
+
+        for every tuple_val in list_of_tuples:
+            global_total_followers += tuple.sum_followers
+            global_total_users += tuple.total_users
+            global_total_zeros += tuple.sum_zeros
+
+            if tuple.local_max_count > global_max_count:
+                global_max_count = tuple.local_max_count
+                global_max_id = tuple.local_max_id
+            
+        average_followers_count = global_total_followers / global_total_users
+
+        yield(global_max_id, global_max_count, average_followers_count, global_total_zeros)
+
+
