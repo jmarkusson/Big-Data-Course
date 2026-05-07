@@ -14,26 +14,9 @@ class Map_phase(MRJob):
         
         yield (star_system, mineral_value)
 
-
-    def shuffle:
-
     
     def reducer(self, star_system, list_of_mineral_values)
         yield (star_system, sum(list_of_mineral_values))
-
-
-
-
-
-
-
-Mapper:
-
-
-
-
-Reduce:
-
 
 
 

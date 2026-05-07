@@ -8,7 +8,7 @@ class MRMineral(MRJob):
 
         cols = row.split(',')
 
-        # Skip header row
+        
         if cols[5] == "Mineral Value (RU)":
             return
 

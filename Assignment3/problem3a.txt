@@ -1,0 +1,54 @@
+class twitter_MR():
+    def map(section of data):
+        follower_list = []
+        
+        lines = read the line
+        user_id, following_string = split lines by (":")
+            
+        if not following_string:
+            zero_following_flag = 1
+            follow_count = 0
+        else:
+            follow_count = length(split by "," on follower string)
+            zero_following_flag = 0
+
+        yield("GLOBAL", (user_id, follow_count, zero_following_flag))
+
+    def combiner(list of tuples);
+
+        sum_followers = 0
+        max_follower_count = 0
+        max_follower_id = 0
+        total_user_count = 0
+        sum_zero_following = 0
+
+        for tuple in list of tuples:
+            sum_followers = sum_followers + tuple.follow_count
+            total_user_count += 1
+            sum_zero_following += tuple.zero_following_flag
+
+            if tuple.follow_count > max_follower_count:
+                max_follower_count = tuple.follow_count
+                max_follower_id = tuple.user_id
+
+        yield("GLOBAL", (max_follower_id, max_follower_count, sum_followers, total_user_count, sum_zero_following))
+
+    def reducer(list of tuples):
+        global_max_id = 0
+        global_max_count = 0
+        global_follower_total = 0
+        global_total_users = 0
+        global_zero_following = 0
+
+        for tuple in tuple list: 
+            global_follower_total = global_follower_total + tuple.sum_followers
+            global_total_users = global_total_users + tuple.total_user_count
+            global_zero_following = global_zero_following + tuple.sum_zero_following
+
+            if tuple.max_follower_count > global_max_count:
+                global_max_count = tuple.max_follower_count
+                global_max_id = tuple.max_follower_id
+
+        average_follow_count = global_follower_total / global_total_users
+
+        yield("GLOBAL", (global_max_id, global_max_count, average_follow_count, global_zero_following))
