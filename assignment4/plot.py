@@ -9,6 +9,6 @@ speedup = [26.48592209815979 / runtime for runtime in runtimes]
 plt.plot(cores, speedup, marker='o')
 plt.xlabel("Number of cores")
 plt.ylabel("Speedup")
-plt.title("Scalability of MapReduce Twitter Job")
+plt.title("Scalability of Spark Twitter Follows Job")
 plt.grid()
 plt.show()
