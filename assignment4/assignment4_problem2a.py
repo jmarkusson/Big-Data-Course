@@ -84,6 +84,7 @@ if __name__ == '__main__':
     spark = SparkSession.builder \
             .master(f'local[{args.num_workers}]') \
             .config("spark.driver.memory", "16g") \
+            .config("spark.ui.enabled", "false") \
             .getOrCreate()
     
     # read the CSV file into a pyspark.sql dataframe and compute the things you need
@@ -96,22 +97,27 @@ if __name__ == '__main__':
 
     computation_time_start = time.time()
 
-    df = df.withColumn("parsed_date", to_date(col("DATE"), "yyyy-MM-dd")) \
-        .withColumn("JDN", jdn(col("parsed_date")))
-
+    df = df.withColumn("parsed_date", to_date(col("DATE"), "yyyy-MM-dd"))
+    df = df.withColumn("YEAR", year(col("parsed_date")))
+    df = df.withColumn("JDN", jdn(col("parsed_date")))
     df = df.drop("parsed_date")
 
     df = df.withColumn("TAVG", (col("TMIN") + col("TMAX")) / 2.0)
 
-    df = df.withColumn("YEAR", year(col("DATE")))
     df = df.withColumn("DECADE", (floor(col("YEAR") / 10) * 10))
 
-    decade_avg = df.groupBy("STATION", "DECADE").avg("TAVG").withColumnRenamed("avg(TAVG)", "AVG_TEMP_DECADE")
+    df = df.cache()
+    df.count()
+
+    decade_avg = df.groupBy("STATION", "DECADE") \
+        .avg("TAVG") \
+        .withColumnRenamed("avg(TAVG)", "AVG_TEMP_DECADE")
 
     slopes = df.groupBy("STATION").applyInPandas(
         lsq,
         schema="STATION string, BETA double"
-    )
+    ).cache()
+    slopes.count()
 
     station_names = df.select("STATION", "NAME").distinct()
     slopes_with_name = slopes.join(station_names, on="STATION", how="left") 
@@ -175,7 +181,8 @@ if __name__ == '__main__':
 
     #JOIN AGAIN TO GET NAMES
     station_names = df.select("STATION", "NAME").distinct()
-    result = pivoted.join(station_names, on="STATION", how="left")
+    result = pivoted.join(station_names, on="STATION", how="left").cache()
+    result.count()
 
     positive = result.filter(col("TAVGDIFF") > 0)
     top5_diff = result.orderBy(col("TAVGDIFF").desc()).limit(5).collect()
@@ -216,3 +223,4 @@ if __name__ == '__main__':
     print(f'num workers: {args.num_workers}')
     print(f'total time: {total_time:0.1f} s')
     print(f'total reading time: {reading_time:0.1f} s')
+    print(f'total computation time: {computation_time:0.1f} s')
