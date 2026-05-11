@@ -38,7 +38,7 @@ def jdn(dt):
 # key is the group key, df is a Pandas dataframe
 # should return a Pandas dataframe
 def lsq(key,df):
-    df = df.dropna(subset=['JDN', 'TAVG']) # Incase of na-vals
+    df = df.dropna(subset=['JDN', 'TAVG'])
 
 
     x = df['JDN']
