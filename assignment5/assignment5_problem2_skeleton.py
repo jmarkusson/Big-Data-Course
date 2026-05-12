@@ -3,6 +3,10 @@
 import argparse
 import sys
 
+def rol32(x,k):
+    """Auxiliary function (left rotation for 32-bit words)"""
+    return ((x << k) | (x >> (32-k))) & 0xffffffff
+
 def murmur3_32(key, seed):
     """Computes the 32-bit murmur3 hash"""
     # use the implementation from Problem 1
