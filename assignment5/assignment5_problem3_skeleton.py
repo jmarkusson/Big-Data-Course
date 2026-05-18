@@ -87,7 +87,6 @@ def compute_jr(key,seed,log2m):
     Return a tuple (j,r) of integers
     """
     h = murmur3_32(key,seed)
-    print(f'{h:08x}')
     j = ~(0xffffffff << log2m) & h
     r = rho(h)
     return j, r
@@ -112,7 +111,14 @@ def get_files(path):
 
 def alpha(m):
     """Auxiliary function: bias correction"""
-    raise NotImplementedError()
+    if m == 16:
+        return 0.673
+    elif m == 32:
+        return 0.697
+    elif m == 64:
+        return 0.709
+    else:
+            return 0.7213 / (1.0 + 1.079 / m)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -155,7 +161,26 @@ if __name__ == '__main__':
 
     # Implement HyperLogLog here
 
-    E = None # replace with your own 
+    words = data.flatMap(lambda text: text.split())
+    jr_pairs = words.map(lambda word: compute_jr(word, seed, log2m))
+    max_r_in_j = jr_pairs.reduceByKey(lambda r1, r2: max(r1, r2))
+    M_dict = max_r_in_j.collectAsMap()
+
+    M = [0] * m
+    for j, r in M_dict.items():
+        M[j] = r
+
+    # Harmonic mean
+    Z = 1.0 / sum(math.pow(2.0, -val) for val in M)
+    
+    # Cardinality Estimate
+    E = alpha(m) * (m ** 2) * Z
+
+    # Linear counting correction that was used in flajolets algorithm
+    if E <= 2.5 * m:
+        V = M.count(0)
+        if V > 0:
+            E = m * math.log(m / float(V)) # Counting zeros instead.
     
     end = time.time()
 
@@ -164,6 +189,4 @@ if __name__ == '__main__':
     print(f'Took {end-start} s')
 
     
-    
-
     
