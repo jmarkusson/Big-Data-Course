@@ -127,23 +127,41 @@ class LocalitySensitiveHashing:
         self._k = k
         self._L = L
         rng = np.random.default_rng(seed)
-        raise NotImplementedError()
+
+        self._random_hyperplanes = RandomHyperplanes(D=self._D, seed=seed)
+
+        self._hash_functions = rng.integers(0, self._D, size=(self._L, self._k))
+
         # draw the hash functions here
         # (essentially, draw a random matrix of shape L*k with values in
         # 0,1,...,D-1)
         # also initialize the random hyperplanes
 
-    def fit(self, X: npt.NDArray[np.float64])->None:
+    def fit(self, X: np.ndarray[np.float64])->None:
         """
         Fit random hyperplanes
         Then project the dataset into binary vectors
         Then hash the dataset L times into the L hash tables
         """
         self._X = X
-        raise NotImplementedError()
+        binary_vectors = self._random_hyperplanes.fit_transform(X)
+
+        self._H = [dict() for _ in range(self._L)]
+
+        powers_of_two = 1 << np.arange(self._k)[::-1]
+        
+        for table_idx in range(self._L):
+            bit_idx = self._hash_functions[table_idx]
+            hashed_keys = binary_vectors[:, bit_idx]
+            integer_keys = hashed_keys.dot(powers_of_two)
+
+            for row_idx, key in enumerate(integer_keys):
+                if key not in self._H[table_idx]:
+                    self._H[table_idx][key] = set()
+                self._H[table_idx][key].add(row_idx)
 
 
-    def query(self, q: npt.NDArray[np.float64])->npt.NDArray[np.int64]:
+    def query(self, q: np.ndarray[np.float64])->np.ndarray[np.int64]:
         """
         Queries one vector
         Returns the *indices* of the nearest neighbors in descending order
@@ -151,7 +169,27 @@ class LocalitySensitiveHashing:
         neighbor (if the vector was member of the dataset, then typically 
         this would be itself), X[I[1]] the second nearest etc.
         """
-        raise NotImplementedError()
+        binary_q = self._random_hyperplanes.transform(q.reshape(1, -1))[0]
+        candidates = set()
+        
+        powers_of_two = 1 << np.arange(self._k)[::-1]
+        
+        for table_idx in range(self._L):
+            bit_idxs = self._hash_functions[table_idx]
+            key = binary_q[bit_idxs].dot(powers_of_two)
+            if key in self._H[table_idx]:
+                candidates.update(self._H[table_idx][key])
+        
+        candidates = list(candidates)
+        if len(candidates) == 0:
+            return np.array([], dtype=np.int64)
+        
+        candidate_vectors = self._X[candidates]
+        scores = candidate_vectors @ q
+        sorted_coords = np.argsort(-scores)
+        sorted_idxs = np.array(candidates)[sorted_coords]
+
+        return sorted_idxs.astype(np.int64)
 
         # Project the query into a binary vector
         # Then hash it L times
