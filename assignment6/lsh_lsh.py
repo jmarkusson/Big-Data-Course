@@ -29,7 +29,14 @@ def normalize(X):
     
     Implement this function using array operations! No loops allowed.
     """
-    raise NotImplementedError()
+    norm = np.linalg.norm(X, axis=1, keepdims=True)
+
+    # division by zero
+    norm[norm == 0] = 1
+
+    normalized_X = X / norm
+    
+    return normalized_X
 
 def construct_queries(queries_fn, word_to_idx, X):
     """
@@ -67,13 +74,22 @@ class RandomHyperplanes:
         columns) of X
         """
         rng = np.random.default_rng(self._seed)
-        raise NotImplementedError()
+
+        R = rng.standard_normal((self._D, X.shape[1]))
+
+        R = R / np.linalg.norm(R, axis=1, keepdims=True)
+
+        self._R = R
 
     def transform(self, X):
         """
         Project the rows of X into binary vectors
         """
-        raise NotImplementedError()
+        projected_X = X @ self._R.T
+
+        binary_X = (projected_X > 0).astype(int)
+
+        return binary_X
 
     def fit_transform(self, X):
         """

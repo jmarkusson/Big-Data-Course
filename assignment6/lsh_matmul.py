@@ -28,7 +28,14 @@ def normalize(X):
     
     Implement this function using array operations! No loops allowed.
     """
-    raise NotImplementedError()
+    norm = np.linalg.norm(X, axis=1, keepdims=True)
+
+    # division by zero
+    norm[norm == 0] = 1
+
+    normalized_X = X / norm
+    
+    return normalized_X
 
 def construct_queries(queries_fn, word_to_idx, X):
     """
@@ -59,15 +66,17 @@ if __name__ == '__main__':
 
     t1 = time.time()
 
-    raise NotImplementedError()
-    
-    t2 = time.time()
+    # S(x,y) = x . y / (|x| . |y|)
 
-    raise NotImplementedError()
+    S = np.dot(Q, X.T)
+
+    t2 = time.time()
 
     # Compute here I such that I[i,:] contains the indices of the nearest
     # neighbors of the word i in ascending order.
     # Naturally, I[i,-1] should then be the index of the word itself.
+
+    I = np.argsort(S, axis=1)
 
     t3 = time.time()
     
